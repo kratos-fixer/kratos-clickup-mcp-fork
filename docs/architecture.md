@@ -54,7 +54,7 @@ flowchart TB
 
 | Limit | Value | Enforced by |
 |---|---|---|
-| File length in our paths | 1000 lines | `file-size` step of the `comment-length` job |
+| File length in our paths | 1000 lines | `file-size` job |
 | Comment block in our paths | 3 lines | `comment-length` job |
 | CODE lines per PR | 400 | `pr-size` job |
 
