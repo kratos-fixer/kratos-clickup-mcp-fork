@@ -1,5 +1,14 @@
 import { posix } from "node:path";
-import { KRATOS_BASE_MODULES, KRATOS_ENTRY, KRATOS_ROOT, UPSTREAM_IMPORTABLE, UPSTREAM_SEAM_IMPORTERS } from "../settings.ts";
+import {
+  CHECKED_SOURCE,
+  KRATOS_BASE_MODULES,
+  KRATOS_ENTRY,
+  KRATOS_ROOT,
+  MAX_FILE_LINES,
+  UPSTREAM_IMPORTABLE,
+  UPSTREAM_SEAM_IMPORTERS,
+  isOurPath,
+} from "../settings.ts";
 
 export type Rule = "upstream-into-kratos" | "kratos-into-upstream" | "module-internals" | "sideways" | "upward" | "outside-module";
 export type Violation = { rule: Rule; file: string; specifier?: string };
@@ -143,3 +152,22 @@ export function compareBaseline(found: Violation[], baseline: BaselineEntry[]): 
   const known = new Set(baseline.map((entry) => entry.violation));
   return { fresh: [...ids].filter((id) => !known.has(id)), stale: [...known].filter((id) => !ids.has(id)) };
 }
+
+// Our files only: upstream files keep upstream's length.
+export function checkFileLength(path: string, source: string): string[] {
+  if (!isOurPath(path) || !CHECKED_SOURCE.test(path)) return [];
+  const lines = source === "" ? 0 : source.split("\n").length - Number(source.endsWith("\n"));
+  return lines > MAX_FILE_LINES ? [`${path}: ${lines} lines (max ${MAX_FILE_LINES})`] : [];
+}
+
+export type TrackedFile = { path: string; source: string };
+export type TreeVerdict = { fresh: string[]; stale: string[]; long: string[]; scanned: number; found: number };
+
+export function judgeTree(files: TrackedFile[], baseline: BaselineEntry[]): TreeVerdict {
+  const scanned = files.filter((file) => isScanned(file.path));
+  const found = scanned.flatMap((file) => scanFile(file.path, file.source));
+  const long = files.flatMap((file) => checkFileLength(file.path, file.source));
+  return { ...compareBaseline(found, baseline), long, scanned: scanned.length, found: found.length };
+}
+
+export const treeFails = (verdict: TreeVerdict) => verdict.fresh.length > 0 || verdict.long.length > 0;

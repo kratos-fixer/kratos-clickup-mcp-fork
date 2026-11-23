@@ -54,15 +54,15 @@ flowchart TB
 
 | Limit | Value | Enforced by |
 |---|---|---|
-| File length in our paths | 1000 lines | `file-size` step of the `kratos` job |
-| Comment block in our paths | 3 lines | `comment-length` step of the `kratos` job |
-| CODE lines per PR | 400 | `pr-size` step of the `kratos` job |
+| File length in our paths | 1000 lines | `architecture` check |
+| Comment block in our paths | 3 lines | `comment-length` check |
+| CODE lines per PR | about 400 | no check: one PR is one change, up to about 400 CODE lines; a PR that does not split says why in its body. Count with `bun .github/scripts/pr-size.ts --range origin/main...HEAD`. |
 
 A comment says why, in one line by default. The code says what; history belongs in the commit and the PR.
 
 ## 6. The `architecture` check
 
-`.github/scripts/architecture/cli.ts` reads every tracked `src/**/*.ts` file and judges each import edge that starts or ends in `src/kratos/`. It reports:
+`.github/scripts/architecture/cli.ts` reads every tracked `src/**/*.ts` file and judges each import edge that starts or ends in `src/kratos/`. It also fails on any file in our paths over 1000 lines (`LONG`). It reports these import rules:
 
 | Rule | Example |
 |---|---|

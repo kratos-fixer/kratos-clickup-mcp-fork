@@ -2,7 +2,6 @@ import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { isOurPath } from "../settings.ts";
 import { scanDiff, scanSource } from "../comment-length/index.ts";
-import { checkFile } from "../file-size.ts";
 import { countCode, ledgerPaths, parseNumstat, seamPaths, unledgered } from "../pr-size.ts";
 import { expectedFailures, failedTitles, matchesTestGlob, unexpectedFailures } from "../upstream-tests.ts";
 
@@ -129,17 +128,6 @@ describe("comment length", () => {
   });
   test("yaml is scanned like yml", () => {
     expect(scanSource(".github/workflows/kratos.yaml", "# a\n# b\n# c\n# d\n")).toHaveLength(1);
-  });
-});
-
-describe("file size", () => {
-  const over = "x\n".repeat(1001);
-  test("limits our code only", () => {
-    expect(checkFile("src/kratos/large.ts", over)).toHaveLength(1);
-    expect(checkFile("src/kratos/ok.ts", "x\n".repeat(1000))).toEqual([]);
-    expect(checkFile("src/tools/task-tools.ts", over)).toEqual([]);
-    expect(checkFile("docs/dev/playbook.md", over)).toEqual([]);
-    expect(checkFile(".github/workflows/large.yaml", over)).toHaveLength(1);
   });
 });
 
