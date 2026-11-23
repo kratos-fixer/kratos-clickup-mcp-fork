@@ -54,9 +54,9 @@ flowchart TB
 
 | Limit | Value | Enforced by |
 |---|---|---|
-| File length in our paths | 1000 lines | `file-size` step of the `kratos` job |
-| Comment block in our paths | 3 lines | `comment-length` step of the `kratos` job |
-| CODE lines per PR | 400 | `pr-size` step of the `kratos` job |
+| File length in our paths | 1000 lines | `file-size` step of the `comment-length` job |
+| Comment block in our paths | 3 lines | `comment-length` job |
+| CODE lines per PR | 400 | `pr-size` job |
 
 A comment says why, in one line by default. The code says what; history belongs in the commit and the PR.
 
