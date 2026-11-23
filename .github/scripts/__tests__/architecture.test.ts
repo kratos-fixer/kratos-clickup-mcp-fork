@@ -1,7 +1,17 @@
 import { describe, expect, test } from "bun:test";
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
-import { compareBaseline, importSpecifiers, judgeImport, outsideModule, scanFile, violationId } from "../architecture/index.ts";
+import {
+  checkFileLength,
+  compareBaseline,
+  importSpecifiers,
+  judgeImport,
+  judgeTree,
+  outsideModule,
+  scanFile,
+  treeFails,
+  violationId,
+} from "../architecture/index.ts";
 
 describe("import specifiers", () => {
   test("reads static, re-export, side-effect, dynamic and require forms", () => {
@@ -120,6 +130,24 @@ describe("baseline", () => {
   test("a listed violation passes", () => {
     const { fresh } = compareBaseline(found, [{ violation: violationId(found[0]), reason: "known" }]);
     expect(fresh).toEqual([]);
+  });
+});
+
+describe("file length", () => {
+  const over = "x\n".repeat(1001);
+  test("limits our code only", () => {
+    expect(checkFileLength("src/kratos/large.ts", over)).toHaveLength(1);
+    expect(checkFileLength("src/kratos/ok.ts", "x\n".repeat(1000))).toEqual([]);
+    expect(checkFileLength("src/tools/task-tools.ts", over)).toEqual([]);
+    expect(checkFileLength("docs/dev/playbook.md", over)).toEqual([]);
+    expect(checkFileLength(".github/workflows/large.yaml", over)).toHaveLength(1);
+  });
+  test("a 1001-line file in our paths fails architecture, an upstream one passes", () => {
+    const failing = judgeTree([{ path: "src/kratos/clickup-api/large.ts", source: over }], []);
+    expect(failing.long).toEqual(["src/kratos/clickup-api/large.ts: 1001 lines (max 1000)"]);
+    expect(treeFails(failing)).toBe(true);
+    expect(treeFails(judgeTree([{ path: ".github/scripts/large.ts", source: over }], []))).toBe(true);
+    expect(treeFails(judgeTree([{ path: "src/tools/task-tools.ts", source: over }], []))).toBe(false);
   });
 });
 
