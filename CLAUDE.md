@@ -19,3 +19,10 @@
 - Non-image files reuse the image embed syntax `![caption](path)`: comments get a `type: "attachment"` fragment with the whole attachment object (shape copied from a UI-attached CSV), descriptions get a plain link; isImageAttachment (clickup-text.ts) decides by extension.
 - Image writing lives in src/shared/attachments.ts: markdown image sources are uploaded to the task, then comments get a `type: "image"` fragment carrying the *whole* attachment object (a bare URL string renders as an empty tile), while descriptions only need the markdown URL swapped. Attachments always belong to a task - doc pages cannot have them. Reading renders images back as `![alt](url)` markdown (clickup-text.ts `toMarkdownImage`) so a comment read via getTaskById can be fed straight back into editComment without losing them - keep that read/write symmetry intact.
 - ClickUp comments have no paragraph margins: a paragraph break is an extra empty `\n` fragment (Enter twice in the UI). convertMarkdownToClickUpBlocks inserts one between adjacent paragraphs/lists only - headings, code blocks and blockquotes already render with their own spacing.
+
+## Executor roles
+
+Code in this fork is written by kratos-agents executor profiles:
+- `builder` codes against a written spec; the live dev profile picks its model (Claude, or a Codex variant under a Codex profile).
+- `builder-critical` (Claude opus/high) takes CRITICAL tasks only: credentials, security, owner data, locks/concurrency, migrations, or a recipe marked `PR Tier: Critical`.
+- `builder-critical-codex` (Codex `gpt-6-astra`/medium) takes those critical tasks only when the owner has set the override on the live profile («критичные на codex|claude» in chat). The override is set from kratos-agents: `bun scripts/dev-profile.ts role <profile|alias|current> builder-critical <builder-critical-codex|claude>`. Without it, critical tasks stay on `builder-critical`.
